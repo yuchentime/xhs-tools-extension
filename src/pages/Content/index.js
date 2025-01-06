@@ -1,4 +1,5 @@
 import { printLine } from './modules/print';
+import { collectComments } from './modules/xhsComments';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
@@ -52,5 +53,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Toggle action received!');
     toggleIframe(IframeManager.getInstance());
     sendResponse('Message received!');
+  } else if (message.action === 'xhsComments') {
+    console.log('xhsComments action received!');
+    collectComments().then(() => {
+      sendResponse('Message received!');
+    });
+  } else {
+    sendResponse('Unknown action!');
   }
+  return true;
 });
