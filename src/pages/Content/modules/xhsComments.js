@@ -1,60 +1,119 @@
 export const collectComments = async () => {
-  let atEnd = false;
-  for (let i = 0; i < 2; i++) {
-    console.log('Collecting comments...');
-    const parentComments = document.querySelectorAll('.parent-comment');
-    for (const parentComment of parentComments) {
-      const comment = handleParentComment(parentComment);
-      console.log('Comment:', comment);
+  try {
+    const scrollElement = document.querySelector('.note-scroller');
+    const commentContainer = document.querySelector('.comments-container');
+    while (true) {
+      console.log('Collecting comments...');
+      const parentComments = document.querySelectorAll('.parent-comment');
+
+      // 遍历父评论
+      for (let i = 0; i < parentComments.length; i++) {
+        const parentComment = parentComments[i];
+        try {
+            const comment = handleParentComment(parentComment);
+          //   console.log('Comment:', comment);
+        } catch (err) {
+          console.error('Error handling parent comment:', err);
+        }
+        if (i / 5 === 0) {
+          scrollView();
+        }
+      }
+
+      console.log('已完成一轮采集');
+
+      const endContainer = commentContainer.querySelector('.end-container');
+      if (endContainer) {
+        break;
+      }
+
+      // 等待一段时间，模拟延时
+      await new Promise((resolve) =>
+        setTimeout(resolve, (Math.random() * 3 + 1) * 1000 + 2000)
+      );
+
+      // 滚动容器元素
+      scrollView();
     }
-    await new Promise((resolve) =>
-      setTimeout(resolve, (Math.random() * 3 + 1) * 1000 + 2000)
-    );
-    // 指定滚动元素
-    const scrollElement = document.querySelector('.comments-container');
-    // 滚动到指定位置
-    scrollElement.scrollTo({
-      top: 500, // 垂直滚动位置
-      left: 0, // 水平滚动位置
-      behavior: 'smooth', // 可选，平滑滚动
-    });
+
+    console.log('Finished collecting comments!');
+    return true;
+  } catch (err) {
+    console.error('Error collecting comments:', err);
+    return false;
   }
-  console.log('Finished collecting comments!');
-  return true;
 };
 
 const handleParentComment = (parentComment) => {
-  const commentItem = parentComment.querySelector('.comment-item');
-  const commentId = commentItem.getAttribute('id');
-  const commentText = commentItem.textContent;
-  let subComments = new Set();
-  const replyContainer = parentComment.querySelector('.reply-container');
-  if (replyContainer) {
-    subComments = handleMoreSubComments(replyContainer);
+  try {
+    const commentItem = parentComment.querySelector('.comment-item');
+    const commentId = commentItem.getAttribute('id');
+    const commentText = commentItem.textContent;
+
+    let subComments = new Set();
+    const replyContainer = parentComment.querySelector('.reply-container');
+    if (replyContainer) {
+      subComments = handleMoreSubComments(replyContainer);
+    }
+
+    return {
+      id: commentId,
+      text: commentText,
+      subComments,
+    };
+  } catch (err) {
+    console.error('Error handling parent comment:', err);
+    throw err; // 抛出异常
   }
-  return {
-    id: commentId,
-    text: commentText,
-    subComments,
-  };
 };
 
-const handleMoreSubComments = async (replyContainer) => {
-  const subComments = new Set();
+const handleMoreSubComments = async (replyContainer, showCount = 0) => {
+  const subComments = [];
 
-  const replies = replyContainer.querySelectorAll('.comment-item-sub');
-  replies.forEach((reply) => {
-    const replyId = reply.getArrtibute('id');
-    const replyText = reply.textContent;
-    console.log('Reply:', replyText);
-    subComments.add({ id: replyId, text: replyText });
-  });
+  try {
+    const subCommentNodes =
+      replyContainer.querySelectorAll('.comment-item-sub');
+    if (!subCommentNodes || subCommentNodes.length === 0) return subComments;
 
-  const showMore = replyContainer.querySelector('.show-more');
-  if (showMore) {
-    showMore.click();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    handleMoreSubComments(replyContainer);
+    subCommentNodes.forEach((subCommentNode) => {
+      const replyText = subCommentNode.textContent;
+      //   console.log('Reply:', replyText);
+      const replyId = subCommentNode.getAttribute('id');
+      subComments.push({ id: replyId, text: replyText });
+    });
+
+    if (showCount > 0) {
+      scrollView();
+    }
+
+    const showMore = replyContainer.querySelector('.show-more');
+    if (showMore) {
+      showMore.click();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 确保递归的异步调用等待结果
+      const moreSubComments = await handleMoreSubComments(
+        replyContainer,
+        ++showCount
+      );
+      moreSubComments.forEach((comment) => subComments.push(comment)); // 将新的子评论合并
+    }
+  } catch (err) {
+    console.error('Error handling sub-comments:', err);
   }
+
   return subComments;
+};
+
+const scrollView = (topHeight = 500) => {
+  const scrollElement = document.querySelector('.note-scroller');
+  if (scrollElement) {
+    console.log('Scrolling...');
+    scrollElement.scrollBy({
+      top: topHeight,
+      left: 0,
+      behavior: 'smooth',
+    });
+  } else {
+    console.error('Scroll element not found!');
+  }
 };
