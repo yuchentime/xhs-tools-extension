@@ -1,26 +1,38 @@
 export const collectComments = async () => {
   try {
-    const scrollElement = document.querySelector('.note-scroller');
+    let prevBatchLastCommentId = null;
+    const comments = [];
     const commentContainer = document.querySelector('.comments-container');
     while (true) {
       console.log('Collecting comments...');
       const parentComments = document.querySelectorAll('.parent-comment');
-
-      // 遍历父评论
-      for (let i = 0; i < parentComments.length; i++) {
-        const parentComment = parentComments[i];
-        try {
-            const comment = handleParentComment(parentComment);
-          //   console.log('Comment:', comment);
-        } catch (err) {
-          console.error('Error handling parent comment:', err);
-        }
-        if (i / 5 === 0) {
-          scrollView();
-        }
+      if (!parentComments || parentComments.length === 0) {
+        break;
       }
-
-      console.log('已完成一轮采集');
+      console.log('准备采集,', parentComments);
+      const lastParentComment = parentComments[parentComments.length - 1];
+      const lastCommentItem = lastParentComment.querySelector('.comment-item');
+      const lastCommentId = lastCommentItem.getAttribute('id');
+      // 检测采集的批次是不是跟上一个批次一样
+      if (prevBatchLastCommentId !== lastCommentId) {
+        console.log('开始采集');
+        // 遍历父评论
+        for (let i = 0; i < parentComments.length; i++) {
+          const parentComment = parentComments[i];
+          try {
+            const comment = await handleParentComment(parentComment);
+            console.log('Comment:', comment);
+            comments.push(comment);
+          } catch (err) {
+            console.error('Error handling parent comment:', err);
+          }
+          if (i / 5 === 0) {
+            scrollView();
+          }
+        }
+        console.log('已完成一轮采集');
+      }
+      prevBatchLastCommentId = lastCommentId;
 
       const endContainer = commentContainer.querySelector('.end-container');
       if (endContainer) {
@@ -36,7 +48,10 @@ export const collectComments = async () => {
       scrollView();
     }
 
+    // TODO 对comments去重处理
+
     console.log('Finished collecting comments!');
+    console.log('Comments: ', comments);
     return true;
   } catch (err) {
     console.error('Error collecting comments:', err);
@@ -44,16 +59,17 @@ export const collectComments = async () => {
   }
 };
 
-const handleParentComment = (parentComment) => {
+const handleParentComment = async (parentComment) => {
   try {
     const commentItem = parentComment.querySelector('.comment-item');
     const commentId = commentItem.getAttribute('id');
     const commentText = commentItem.textContent;
 
-    let subComments = new Set();
+    let subComments = [];
     const replyContainer = parentComment.querySelector('.reply-container');
     if (replyContainer) {
-      subComments = handleMoreSubComments(replyContainer);
+      subComments = await handleMoreSubComments(replyContainer);
+      // TODO 根据id字段对subComments进行去重
     }
 
     return {
@@ -84,6 +100,9 @@ const handleMoreSubComments = async (replyContainer, showCount = 0) => {
 
     if (showCount > 0) {
       scrollView();
+      await new Promise((resolve) =>
+        setTimeout(resolve, (Math.random() * 2 + 1) * 500)
+      );
     }
 
     const showMore = replyContainer.querySelector('.show-more');
