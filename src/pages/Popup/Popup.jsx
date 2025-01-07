@@ -24,7 +24,7 @@ const Popup = () => {
   };
 
   const exportComments = async () => {
-    const tab = await getCurrentTab();  
+    const tab = await getCurrentTab();
     chrome.tabs.sendMessage(tab.id, { action: 'exportXhsComments' });
   };
 
@@ -47,13 +47,15 @@ const Popup = () => {
           style={{
             backgroundColor: 'white',
             color: 'black',
-            border: '1px solid black',
+            border: 'none',
             padding: '5px',
             borderRadius: '5px',
             cursor: 'pointer',
             fontSize: '16px',
             display: 'flex',
             justifyContent: 'space-between',
+            height: '40px',
+            alignItems: 'center',
           }}
         >
           <span>采集评论</span>
@@ -76,11 +78,10 @@ const Popup = () => {
               <PlayIcon
                 width={20}
                 height={20}
-                fill="#fff"
+                fill="green"
                 onClick={startScrapeComments}
               />
             )}
-            {/* <ArrowUpOnSquareIcon width={20} height={20} fill="#fff" onClick={exportComments} /> */}
           </div>
         </div>
       </div>
