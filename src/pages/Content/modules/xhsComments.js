@@ -1,9 +1,22 @@
-export const collectComments = async (executeStatus) => {
+let isCollecting = false;
+
+// 添加停止收集的方法
+export const stopCollecting = () => {
+  isCollecting = false;
+  chrome.storage.local.set({ isCollecting });
+  console.log('Stopping comment collection...');
+};
+
+export const collectComments = async () => {
+  // 重置状态
+  isCollecting = true;
+  chrome.storage.local.set({ isCollecting });
+
   try {
     let prevBatchLastCommentId = null;
     let comments = [];
     const commentContainer = document.querySelector('.comments-container');
-    while (true || executeStatus === 'running') {
+    while (isCollecting) {
       console.log('Collecting comments...');
       const parentComments = document.querySelectorAll('.parent-comment');
       if (!parentComments || parentComments.length === 0) {
@@ -18,6 +31,10 @@ export const collectComments = async (executeStatus) => {
         console.log('开始采集');
         // 遍历父评论
         for (let i = 0; i < parentComments.length; i++) {
+          if (!isCollecting) {
+            console.log('停止采集');
+            break;
+          }
           const parentComment = parentComments[i];
           try {
             const comment = await handleParentComment(parentComment);
@@ -26,6 +43,8 @@ export const collectComments = async (executeStatus) => {
           } catch (err) {
             console.error('Error handling parent comment:', err);
           }
+
+          // 没采集5条一级评论，向下滚动一次
           if (i / 5 === 0) {
             scrollDown();
           }
@@ -53,6 +72,11 @@ export const collectComments = async (executeStatus) => {
 
     console.log('Finished collecting comments!');
     console.log('Comments: ', comments);
+
+    isCollecting = false;
+    chrome.storage.local.set({ isCollecting });
+    // 导出csv
+    exportCsv(comments);
     return true;
   } catch (err) {
     console.error('Error collecting comments:', err);
@@ -158,4 +182,41 @@ const getCommentInfo = (commentItem) => {
     profileUrl,
     location,
   };
+};
+
+const exportCsv = (data) => {
+  // 定义CSV的列头
+  const headers = [
+    'id',
+    'text',
+    'author',
+    'profileUrl',
+    'location',
+    'parentCommentId',
+  ];
+  let csvContent = '\uFEFF'; // 添加BOM头，确保UTF-8编码
+  csvContent += headers.join(',') + '\n';
+
+  // 遍历一级评论
+  data.forEach((comment) => {
+    // 添加一级评论到CSV
+    csvContent += `${comment.id},${comment.text},${comment.author},${comment.profileUrl},${comment.location},\n`;
+
+    // 遍历二级评论
+    comment.subComments.forEach((subComment) => {
+      // 添加二级评论到CSV，并设置parentCommentId为一级评论的id
+      csvContent += `${subComment.id},${subComment.text},${subComment.author},${subComment.profileUrl},${subComment.location},${comment.id}\n`;
+    });
+  });
+
+  // 创建一个Blob对象并生成下载链接
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'comments.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

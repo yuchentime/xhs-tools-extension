@@ -1,35 +1,35 @@
 import { printLine } from './modules/print';
-import { collectComments } from './modules/xhsComments';
+import { collectComments, stopCollecting } from './modules/xhsComments';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
 
 printLine("Using the 'printLine' function from the Print Module");
 
-let executeStatus = "running"
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received from background script:', message);
   if (message.action === 'startXhsComments') {
     console.log('xhsComments action received!');
     chrome.runtime.sendMessage({ action: 'process' });
-
-    collectComments(executeStatus)
+    collectComments()
       .then(() => {
         chrome.runtime.sendMessage({ action: 'reset' });
-        sendResponse('Message received!');
+        sendResponse({status: 'ok'});
       })
       .catch((error) => {
         console.error('Error collecting comments:', error);
-        chrome.runtime.sendMessage({ action: 'reset' });
-        sendResponse('Error collecting comments!');
+        stopCollecting();
+        sendResponse({status: 'error', error: error.message});
       });
   } else if (message.action === 'stopXhsComments') {
     console.log('stopXhsComments action received!');
-    executeStatus = "stopped"
-    chrome.runtime.sendMessage({ action: 'reset' });
+    stopCollecting();
+    sendResponse({status: 'ok'});
+  } else if (message.action === 'exportCsv') {
+    console.log('exportCsv action received!');
+    sendResponse({status: 'ok'});
   } else {
-    sendResponse('Unknown action!');
+    sendResponse({status: 'error', error: 'Unknown action'});
   }
   return true;
 });

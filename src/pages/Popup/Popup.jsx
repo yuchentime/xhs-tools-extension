@@ -1,16 +1,31 @@
-import { Bars3Icon, PlayIcon } from '@heroicons/react/24/outline';
-import React from 'react';
+import { PlayIcon, StopIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useState } from 'react';
 import './Popup.css';
 
 const Popup = () => {
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    chrome.storage.local.get(['isCollecting'], (result) => {
+      setRunning(result.isCollecting);
+    });
+  }, []);
+
   const startScrapeComments = async () => {
     const tab = await getCurrentTab();
     chrome.tabs.sendMessage(tab.id, { action: 'startXhsComments' });
+    setRunning(true);
   };
 
   const stopScrapeComments = async () => {
     const tab = await getCurrentTab();
     chrome.tabs.sendMessage(tab.id, { action: 'stopXhsComments' });
+    setRunning(false);
+  };
+
+  const exportComments = async () => {
+    const tab = await getCurrentTab();  
+    chrome.tabs.sendMessage(tab.id, { action: 'exportXhsComments' });
   };
 
   const getCurrentTab = async () => {
@@ -30,9 +45,9 @@ const Popup = () => {
       <div style={{}}>
         <div
           style={{
-            backgroundColor: '#1890ff',
-            color: '#fff',
-            border: 'none',
+            backgroundColor: 'white',
+            color: 'black',
+            border: '1px solid black',
             padding: '5px',
             borderRadius: '5px',
             cursor: 'pointer',
@@ -50,18 +65,22 @@ const Popup = () => {
               gap: '5px',
             }}
           >
-            <PlayIcon
-              width={20}
-              height={20}
-              fill="#fff"
-              onClick={startScrapeComments}
-            />
-            <Bars3Icon
-              width={20}
-              height={20}
-              fill="#fff"
-              onClick={stopScrapeComments}
-            />
+            {running ? (
+              <StopIcon
+                width={20}
+                height={20}
+                fill="red"
+                onClick={stopScrapeComments}
+              />
+            ) : (
+              <PlayIcon
+                width={20}
+                height={20}
+                fill="#fff"
+                onClick={startScrapeComments}
+              />
+            )}
+            {/* <ArrowUpOnSquareIcon width={20} height={20} fill="#fff" onClick={exportComments} /> */}
           </div>
         </div>
       </div>
