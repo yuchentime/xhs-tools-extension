@@ -203,10 +203,12 @@ const exportCsv = (data) => {
     csvContent += `${comment.id},${comment.text},${comment.author},${comment.profileUrl},${comment.location},\n`;
 
     // 遍历二级评论
-    comment.subComments.forEach((subComment) => {
-      // 添加二级评论到CSV，并设置parentCommentId为一级评论的id
-      csvContent += `${subComment.id},${subComment.text},${subComment.author},${subComment.profileUrl},${subComment.location},${comment.id}\n`;
-    });
+    if (comment.subComments && comment.subComments.length > 0) {
+      comment.subComments.forEach((subComment) => {
+        // 添加二级评论到CSV，并设置parentCommentId为一级评论的id
+        csvContent += `${subComment.id},${subComment.text},${subComment.author},${subComment.profileUrl},${subComment.location},${comment.id}\n`;
+      });
+    }
   });
 
   // 创建一个Blob对象并生成下载链接
