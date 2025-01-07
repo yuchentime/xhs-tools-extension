@@ -1,15 +1,15 @@
-export const collectComments = async () => {
+export const collectComments = async (executeStatus) => {
   try {
     let prevBatchLastCommentId = null;
-    const comments = [];
+    let comments = [];
     const commentContainer = document.querySelector('.comments-container');
-    while (true) {
+    while (true || executeStatus === 'running') {
       console.log('Collecting comments...');
       const parentComments = document.querySelectorAll('.parent-comment');
       if (!parentComments || parentComments.length === 0) {
         break;
       }
-      console.log('准备采集,', parentComments);
+      console.log('准备采集');
       const lastParentComment = parentComments[parentComments.length - 1];
       const lastCommentItem = lastParentComment.querySelector('.comment-item');
       const lastCommentId = lastCommentItem.getAttribute('id');
@@ -27,7 +27,7 @@ export const collectComments = async () => {
             console.error('Error handling parent comment:', err);
           }
           if (i / 5 === 0) {
-            scrollView();
+            scrollDown();
           }
         }
         console.log('已完成一轮采集');
@@ -45,10 +45,11 @@ export const collectComments = async () => {
       );
 
       // 滚动容器元素
-      scrollView();
+      scrollDown();
     }
 
     // TODO 对comments去重处理
+    comments = dedupeById(comments);
 
     console.log('Finished collecting comments!');
     console.log('Comments: ', comments);
@@ -62,19 +63,19 @@ export const collectComments = async () => {
 const handleParentComment = async (parentComment) => {
   try {
     const commentItem = parentComment.querySelector('.comment-item');
-    const commentId = commentItem.getAttribute('id');
-    const commentText = commentItem.textContent;
+
+    const comment = getCommentInfo(commentItem);
 
     let subComments = [];
     const replyContainer = parentComment.querySelector('.reply-container');
     if (replyContainer) {
       subComments = await handleMoreSubComments(replyContainer);
       // TODO 根据id字段对subComments进行去重
+      subComments = dedupeById(subComments);
     }
 
     return {
-      id: commentId,
-      text: commentText,
+      ...comment,
       subComments,
     };
   } catch (err) {
@@ -85,21 +86,19 @@ const handleParentComment = async (parentComment) => {
 
 const handleMoreSubComments = async (replyContainer, showCount = 0) => {
   const subComments = [];
+  const subCommentNodes = replyContainer.querySelectorAll('.comment-item-sub');
+  if (!subCommentNodes || subCommentNodes.length === 0) return subComments;
+
+  subCommentNodes.forEach((subCommentNode) => {
+    const comment = getCommentInfo(subCommentNode);
+    subComments.push({
+      ...comment,
+    });
+  });
 
   try {
-    const subCommentNodes =
-      replyContainer.querySelectorAll('.comment-item-sub');
-    if (!subCommentNodes || subCommentNodes.length === 0) return subComments;
-
-    subCommentNodes.forEach((subCommentNode) => {
-      const replyText = subCommentNode.textContent;
-      //   console.log('Reply:', replyText);
-      const replyId = subCommentNode.getAttribute('id');
-      subComments.push({ id: replyId, text: replyText });
-    });
-
     if (showCount > 0) {
-      scrollView();
+      scrollDown();
       await new Promise((resolve) =>
         setTimeout(resolve, (Math.random() * 2 + 1) * 500)
       );
@@ -116,6 +115,7 @@ const handleMoreSubComments = async (replyContainer, showCount = 0) => {
       );
       moreSubComments.forEach((comment) => subComments.push(comment)); // 将新的子评论合并
     }
+    console.log('Sub-comments:', subComments);
   } catch (err) {
     console.error('Error handling sub-comments:', err);
   }
@@ -123,7 +123,7 @@ const handleMoreSubComments = async (replyContainer, showCount = 0) => {
   return subComments;
 };
 
-const scrollView = (topHeight = 500) => {
+const scrollDown = (topHeight = 500) => {
   const scrollElement = document.querySelector('.note-scroller');
   if (scrollElement) {
     console.log('Scrolling...');
@@ -135,4 +135,27 @@ const scrollView = (topHeight = 500) => {
   } else {
     console.error('Scroll element not found!');
   }
+};
+
+const dedupeById = (comments) => {
+  return comments.filter(
+    (item, index, array) => array.findIndex((el) => el.id === item.id) === index
+  );
+};
+
+const getCommentInfo = (commentItem) => {
+  const commentId = commentItem.getAttribute('id');
+  const commentTextNode = commentItem.querySelector('.note-text');
+  const commentText = commentTextNode?.textContent;
+  const authorNode = commentItem.querySelector('.author > a');
+  const author = authorNode?.textContent;
+  const profileUrl = authorNode.getAttribute('href');
+  const location = commentItem.querySelector('.location')?.textContent;
+  return {
+    id: commentId,
+    text: commentText,
+    author,
+    profileUrl,
+    location,
+  };
 };
