@@ -11,10 +11,9 @@ export const collectComments = async () => {
   // 重置状态
   isCollecting = true;
   chrome.storage.local.set({ isCollecting });
-
+  let comments = [];
   try {
     let prevBatchLastCommentId = null;
-    let comments = [];
     const commentContainer = document.querySelector('.comments-container');
     while (isCollecting) {
       console.log('Collecting comments...');
@@ -75,12 +74,10 @@ export const collectComments = async () => {
 
     isCollecting = false;
     chrome.storage.local.set({ isCollecting });
-    // 导出csv
-    exportCsv(comments);
-    return true;
+    return comments;
   } catch (err) {
     console.error('Error collecting comments:', err);
-    return false;
+    return comments;
   }
 };
 
@@ -182,43 +179,4 @@ const getCommentInfo = (commentItem) => {
     profileUrl,
     location,
   };
-};
-
-const exportCsv = (data) => {
-  // 定义CSV的列头
-  const headers = [
-    'id',
-    'text',
-    'author',
-    'profileUrl',
-    'location',
-    'parentCommentId',
-  ];
-  let csvContent = '\uFEFF'; // 添加BOM头，确保UTF-8编码
-  csvContent += headers.join(',') + '\n';
-
-  // 遍历一级评论
-  data.forEach((comment) => {
-    // 添加一级评论到CSV
-    csvContent += `${comment.id},${comment.text},${comment.author},${comment.profileUrl},${comment.location},\n`;
-
-    // 遍历二级评论
-    if (comment.subComments && comment.subComments.length > 0) {
-      comment.subComments.forEach((subComment) => {
-        // 添加二级评论到CSV，并设置parentCommentId为一级评论的id
-        csvContent += `${subComment.id},${subComment.text},${subComment.author},${subComment.profileUrl},${subComment.location},${comment.id}\n`;
-      });
-    }
-  });
-
-  // 创建一个Blob对象并生成下载链接
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', 'comments.csv');
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };

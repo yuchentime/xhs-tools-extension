@@ -1,5 +1,6 @@
 import { printLine } from './modules/print';
 import { collectComments, stopCollecting } from './modules/xhsComments';
+import { exportCommentsToCSV } from './modules/csv';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
@@ -12,8 +13,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('xhsComments action received!');
     chrome.runtime.sendMessage({ action: 'process' });
     collectComments()
-      .then(() => {
-        chrome.runtime.sendMessage({ action: 'reset' });
+      .then((comments) => {
+        // 导出csv
+        exportCommentsToCSV(comments);
         sendResponse({status: 'ok'});
       })
       .catch((error) => {
