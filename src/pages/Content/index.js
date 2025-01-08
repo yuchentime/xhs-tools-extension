@@ -11,7 +11,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received from background script:', message);
   if (message.action === 'startXhsComments') {
     console.log('xhsComments action received!');
-    chrome.runtime.sendMessage({ action: 'process' });
     collectComments()
       .then((comments) => {
         // 导出csv
