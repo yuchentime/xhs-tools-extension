@@ -1,25 +1,90 @@
-import React from 'react';
-import logo from '../../assets/img/logo.svg';
-import Greetings from '../../containers/Greetings/Greetings';
+import { PlayIcon, StopIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useState } from 'react';
 import './Popup.css';
 
 const Popup = () => {
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    chrome.storage.local.get(['isCollecting'], (result) => {
+      setRunning(result.isCollecting);
+    });
+  }, []);
+
+  const startScrapeComments = async () => {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'startXhsComments' });
+    setRunning(true);
+  };
+
+  const stopScrapeComments = async () => {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'stopXhsComments' });
+    setRunning(false);
+  };
+
+  const exportComments = async () => {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'exportXhsComments' });
+  };
+
+  const getCurrentTab = async () => {
+    return new Promise((resolve, reject) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(tabs[0]);
+        }
+      });
+    });
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/pages/Popup/Popup.jsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+      <div style={{}}>
+        <div
+          style={{
+            backgroundColor: 'white',
+            color: 'black',
+            border: 'none',
+            padding: '5px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            height: '40px',
+            alignItems: 'center',
+          }}
         >
-          Learn React!
-        </a>
-      </header>
+          <span>采集评论</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+            }}
+          >
+            {running ? (
+              <StopIcon
+                width={20}
+                height={20}
+                fill="red"
+                onClick={stopScrapeComments}
+              />
+            ) : (
+              <PlayIcon
+                width={20}
+                height={20}
+                fill="green"
+                onClick={startScrapeComments}
+              />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

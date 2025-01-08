@@ -1,56 +1,36 @@
 import { printLine } from './modules/print';
+import { collectComments, stopCollecting } from './modules/xhsComments';
+import { exportCommentsToCSV } from './modules/csv';
 
 console.log('Content script works!');
 console.log('Must reload extension for modifications to take effect.');
 
 printLine("Using the 'printLine' function from the Print Module");
 
-const IFRAME_ID = 'xhs-id-iframe';
-const IFRAME_CLASS = 'xhs-flow-iframe';
-const ANIMATION_CLASS = {
-  IN: 'iframe-animation-in',
-  OUT: 'iframe-animation-out',
-};
-const iframeSrc = chrome.runtime.getURL('iframe.html');
-
-class IframeManager {
-  static instance = null;
-
-  static getInstance() {
-    if (!this.instance) {
-      const parser = new DOMParser();
-      this.instance = parser.parseFromString(
-        `<iframe id="${IFRAME_ID}" class="${IFRAME_CLASS}" src="${iframeSrc}"></iframe>`,
-        'text/html'
-      ).body.firstElementChild;
-    }
-    return this.instance;
-  }
-}
-
-function toggleIframe(iframe) {
-  if (!iframe || !document.body) return;
-
-  requestAnimationFrame(() => {
-    const isVisible = document.body.contains(iframe);
-
-    if (isVisible) {
-      iframe.classList.add(ANIMATION_CLASS.OUT);
-      iframe.classList.remove(ANIMATION_CLASS.IN);
-      document.body.removeChild(iframe);
-    } else {
-      iframe.classList.remove(ANIMATION_CLASS.OUT);
-      iframe.classList.add(ANIMATION_CLASS.IN);
-      document.body.appendChild(iframe);
-    }
-  });
-}
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received from background script:', message);
-  if (message.action === 'toggle') {
-    console.log('Toggle action received!');
-    toggleIframe(IframeManager.getInstance());
-    sendResponse('Message received!');
+  if (message.action === 'startXhsComments') {
+    console.log('xhsComments action received!');
+    collectComments()
+      .then((comments) => {
+        // 导出csv
+        exportCommentsToCSV(comments);
+        sendResponse({status: 'ok'});
+      })
+      .catch((error) => {
+        console.error('Error collecting comments:', error);
+        stopCollecting();
+        sendResponse({status: 'error', error: error.message});
+      });
+  } else if (message.action === 'stopXhsComments') {
+    console.log('stopXhsComments action received!');
+    stopCollecting();
+    sendResponse({status: 'ok'});
+  } else if (message.action === 'exportCsv') {
+    console.log('exportCsv action received!');
+    sendResponse({status: 'ok'});
+  } else {
+    sendResponse({status: 'error', error: 'Unknown action'});
   }
+  return true;
 });
