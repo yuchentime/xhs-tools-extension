@@ -11,7 +11,9 @@ var ReactRefreshTypeScript = require('react-refresh-typescript');
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
-var alias = {};
+var alias = {
+  'puppeteer-core': path.resolve(__dirname, 'node_modules/puppeteer-core'), //仅保留puppeteer-core模块
+};
 
 // load the secrets
 var secretsPath = path.join(__dirname, 'secrets.' + env.NODE_ENV + '.js');
@@ -49,6 +51,12 @@ var options = {
   chromeExtensionBoilerplate: {
     notHotReload: ['background', 'contentScript', 'devtools'],
   },
+  experiments: {
+    outputModule: true,
+  },
+  externals: [
+    'chromium-bidi/lib/cjs/bidiMapper/BidiMapper.js', // 排除puppeteer中不必要的WebDriver模块
+  ],
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'build'),
@@ -132,6 +140,7 @@ var options = {
       .map((extension) => '.' + extension)
       .concat(['.js', '.jsx', '.ts', '.tsx', '.css']),
   },
+  target: 'web', // 目标为浏览器环境
   plugins: [
     isDevelopment && new ReactRefreshWebpackPlugin(),
     new CleanWebpackPlugin({ verbose: false }),
