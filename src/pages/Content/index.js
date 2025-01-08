@@ -11,13 +11,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received from background script:', message);
   if (message.action === 'startXhsComments') {
     console.log('xhsComments action received!');
+    chrome.runtime.sendMessage({action: 'start'});
     collectComments()
       .then((comments) => {
+        chrome.runtime.sendMessage({action: 'stop'});
         // 导出csv
         exportCommentsToCSV(comments);
         sendResponse({status: 'ok'});
       })
       .catch((error) => {
+        chrome.runtime.sendMessage({action: 'stop'});
         console.error('Error collecting comments:', error);
         stopCollecting();
         sendResponse({status: 'error', error: error.message});
@@ -25,6 +28,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'stopXhsComments') {
     console.log('stopXhsComments action received!');
     stopCollecting();
+    chrome.runtime.sendMessage({action: 'stop'});
     sendResponse({status: 'ok'});
   } else if (message.action === 'exportCsv') {
     console.log('exportCsv action received!');

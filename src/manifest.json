@@ -11,7 +11,7 @@
   "icons": {
     "128": "icon-128.png"
   },
-  "permissions": ["activeTab", "storage", "scripting", "action"],
+  "permissions": ["activeTab", "storage", "scripting", "debugger"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
