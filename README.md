@@ -1,6 +1,9 @@
 ## 项目引用
 本项目基于 [Chrome Extension (MV3) Boilerplate with React 18 and Webpack 5](https://github.com/lxieyang/chrome-extension-boilerplate-react) 进行开发。感谢 [lxieyang](https://github.com/lxieyang) 提供的优秀模板。
 
+## 分支说明
+我通常基于xhs-tools分支开发，有随写随提交的恶习，必然存在诸多bug。只有在确认没有什么问题后，我才会将代码合并到main分支。
+
 ## 免责声明
 本项目仅供个人学习使用，请勿用于商业用途。违者PP打肿！
 
