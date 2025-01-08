@@ -49,16 +49,6 @@ const Popup = () => {
 
   return (
     <div className="App">
-      <button
-        style={{
-          backgroundColor: 'blue',
-          color: 'white',
-          padding: '5px',
-        }}
-        onClick={testPuppeteer}
-      >
-        测试Puppeteer
-      </button>
       <div
         style={{
           backgroundColor: 'white',
