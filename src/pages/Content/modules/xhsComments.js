@@ -121,7 +121,7 @@ const handleMoreSubComments = async (replyContainer, showCount = 0) => {
     if (showCount > 0) {
       scrollDown();
       await new Promise((resolve) =>
-        setTimeout(resolve, (Math.random() * 2 + 1) * 500)
+        setTimeout(resolve, (Math.random() * 2 + 1) * 1000)
       );
     }
 
