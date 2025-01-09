@@ -15,6 +15,17 @@ export const testPuppeteer = async (url) => {
   // You will have a single page on the browser object, which corresponds
   // to the tab you connected the transport to.
   const [page] = await browser.pages();
+
+  // 拦截不必要的资源加载
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+      if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+          req.abort();
+      } else {
+          req.continue();
+      }
+  });
+  
   // Perform the usual operations with Puppeteer page.
   await page.waitForSelector('.note-text');
   const bodyHandle = await page.$('.note-text');
