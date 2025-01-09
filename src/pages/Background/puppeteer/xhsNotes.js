@@ -28,9 +28,8 @@ export const testPuppeteer = async (url) => {
   
   // Perform the usual operations with Puppeteer page.
   await page.waitForSelector('.note-text');
-  const bodyHandle = await page.$('.note-text');
-  const html = await page.evaluate((body) => body.textContent, bodyHandle);
-  console.log('标题：', html);
+  const noteText = await page.$eval('.note-text', (noteText) => noteText.textContent);
+  console.log('标题：', noteText);
 
   await page.click('.show-more');
   const replyContainer = await page.$('.list-container');
