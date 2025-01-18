@@ -11,28 +11,18 @@ const Popup = () => {
     });
   }, []);
 
-  const startScrapeComments = async () => {
-    const tab = await getCurrentTab();
-    chrome.tabs.sendMessage(tab.id, { action: 'startXhsComments' });
+  const translate = async () => {
     setRunning(true);
-  };
-
-  const stopScrapeComments = async () => {
     const tab = await getCurrentTab();
-    chrome.tabs.sendMessage(tab.id, { action: 'stopXhsComments' });
-    setRunning(false);
-  };
-
-  const exportComments = async () => {
-    const tab = await getCurrentTab();
-    chrome.tabs.sendMessage(tab.id, { action: 'exportXhsComments' });
-  };
-
-  const testPuppeteer = async () => {
-    chrome.runtime.sendMessage({
-      action: 'testPuppeteer',
-      url: "https://www.xiaohongshu.com/explore/676d4168000000000b014669?xsec_token=ABmL5WRV5ERGyAh6SQQXHzMdqxR-rjBdLP5gSt6pp810E=&xsec_source=pc_feed",
+    chrome.tabs.sendMessage(tab.id, { action: 'translate' }).then(() => {
+      setRunning(false);
     });
+  };
+
+  const stop = async () => {
+    setRunning(false);
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'stop' });
   };
 
   const getCurrentTab = async () => {
@@ -64,7 +54,7 @@ const Popup = () => {
           alignItems: 'center',
         }}
       >
-        <span>采集评论</span>
+        <span>Translate</span>
         <div
           style={{
             display: 'flex',
@@ -74,19 +64,9 @@ const Popup = () => {
           }}
         >
           {running ? (
-            <StopIcon
-              width={20}
-              height={20}
-              fill="red"
-              onClick={stopScrapeComments}
-            />
+            <StopIcon width={20} height={20} fill="red" onClick={translate} />
           ) : (
-            <PlayIcon
-              width={20}
-              height={20}
-              fill="green"
-              onClick={startScrapeComments}
-            />
+            <PlayIcon width={20} height={20} fill="green" onClick={stop} />
           )}
         </div>
       </div>
