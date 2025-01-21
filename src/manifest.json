@@ -15,7 +15,7 @@
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*", "<all_urls>"],
+      "matches": ["https://*.xiaohongshu.com/*"],
       "js": ["contentScript.bundle.js"],
       "css": ["content.styles.css"]
     }
