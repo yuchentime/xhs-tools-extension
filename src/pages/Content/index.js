@@ -12,9 +12,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'startXhsComments') {
     console.log('xhsComments action received!');
     collectComments()
-      .then((comments) => {
+      .then(({comments,title}) => {
         // 导出csv
-        exportCommentsToCSV(comments);
+        exportCommentsToCSV(comments, title+'.csv');
         sendResponse({status: 'ok'});
       })
       .catch((error) => {

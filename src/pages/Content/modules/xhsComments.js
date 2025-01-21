@@ -15,6 +15,8 @@ export const collectComments = async () => {
   try {
     let prevBatchLastCommentId = null;
     const commentContainer = document.querySelector('.comments-container');
+    const titleContainer = document.querySelector('#detail-title');
+    const title = titleContainer ? titleContainer.textContent : '无标题';
     while (isCollecting) {
       console.log('Collecting comments...');
       const parentComments = document.querySelectorAll('.parent-comment');
@@ -74,7 +76,7 @@ export const collectComments = async () => {
 
     isCollecting = false;
     chrome.storage.local.set({ isCollecting });
-    return comments;
+    return {comments, title};
   } catch (err) {
     console.error('Error collecting comments:', err);
     return comments;
